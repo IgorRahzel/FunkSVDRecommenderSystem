@@ -12,7 +12,7 @@ class MatrixBuilder:
         df = self._pre_processing()
         train_data, test_data = self.split_data(df,random_state=13)
         return self.build_train_test_matrices(train_data, test_data)
-
+    
     def _pre_processing(self):
         df = pd.read_csv(self.data)
         df[['UserId', 'ItemId']] = df['UserId:ItemId'].str.split(':', expand=True)
