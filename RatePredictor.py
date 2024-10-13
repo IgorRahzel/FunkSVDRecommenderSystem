@@ -2,13 +2,42 @@ import pandas as pd
 import numpy as np
 
 class RatePredictor:
-    def __init__(self,user_item_matrix,similarity_matrix,user_mean_rating):
+    def __init__(self,user_item_matrix,similarity_matrix,user_mean_rating,raw_data):
         self.user_item_matrix = user_item_matrix
         self.similarity_matrix = similarity_matrix
         self.user_mean_rating = user_mean_rating
+        self.raw_data = raw_data
     
 
     def topK_neighbors(self,itemId, userId, k=5):
+        # Handling cases where user is not in the user-item matrix
+        if userId not in self.user_item_matrix.index:
+            item_raw_data = self.raw_data[self.raw_data['ItemId'] == itemId]
+    
+            # Check if there are any ratings for the item
+            if not item_raw_data.empty:
+                item_avg_rating = item_raw_data['Rating'].mean()
+                return item_avg_rating
+            else:
+                # If there are no ratings for the item, return a global mean or some default value
+                global_mean_rating = self.raw_data['Rating'].mean()
+                return global_mean_rating
+        
+
+        # Handling cases where item is not in the user-item matrix
+        if itemId not in self.user_item_matrix.columns:
+            # Fetch all ratings for the item
+            item_raw_data = self.raw_data[self.raw_data['ItemId'] == itemId]
+
+            # Check if there are any ratings for the item
+            if not item_raw_data.empty:
+                item_avg_rating = item_raw_data['Rating'].mean()
+                return item_avg_rating
+            else:
+                # If there are no ratings for the item, return a global mean or some default value
+                global_mean_rating = self.raw_data['Rating'].mean()
+                return global_mean_rating
+
         # Get the similarities of other items with 'itemId'
         itemId_Similarities = self.similarity_matrix.loc[itemId].copy()
         
@@ -20,7 +49,7 @@ class RatePredictor:
         
         # Filter the top K items with the highest similarity
         topK_similarities = itemId_Similarities.head(k)
-        
+
         # Get the user’s ratings for the top K similar items
         user_ratings = self.user_item_matrix.loc[userId, topK_similarities.index]
         

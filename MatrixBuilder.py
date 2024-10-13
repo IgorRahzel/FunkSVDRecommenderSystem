@@ -10,8 +10,8 @@ class MatrixBuilder:
 
     def __call__(self):
         df = self._pre_processing()
-        train_data, test_data = self.split_data(df,random_state=13)
-        return self.build_train_test_matrices(train_data, test_data)
+        #train_data, test_data = self.split_data(df,random_state=13)
+        return self.build_filtered_matrix(df)
     
     def _pre_processing(self):
         df = pd.read_csv(self.data)
@@ -45,7 +45,7 @@ class MatrixBuilder:
         )
         return user_item_matrix
 
-    def build_train_test_matrices(self, train_data, test_data, min_interactions=5):
+    def build_filtered_matrix(self, data, min_interactions=5):
         """
         Builds user-item matrices for training and testing sets after filtering users.
 
@@ -57,14 +57,13 @@ class MatrixBuilder:
         Returns:
         tuple: Training and testing user-item matrices (pd.DataFrame, pd.DataFrame)
         """
-        # Filter users in train data only
-        filtered_train_data = self.filter_users(train_data, min_interactions)
-        filtered_test_data = self.filter_users(train_data,min_interactions)
-        # Build matrices
-        train_matrix = self.build_matrix(filtered_train_data)
-        test_matrix = self.build_matrix(filtered_test_data)
+        # Filter users in data 
+        filtered_data = self.filter_users(data, min_interactions)
+        # Build matrix
+        matrix = self.build_matrix(filtered_data)
+       
         
-        return train_matrix, test_matrix
+        return matrix
 
 
 #builder = MatrixBuilder()
