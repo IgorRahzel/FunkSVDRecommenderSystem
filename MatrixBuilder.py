@@ -41,7 +41,6 @@ class MatrixBuilder:
             index=self.user_col,
             columns=self.item_col,
             values=self.rating_col,
-            fill_value=0
         )
         return user_item_matrix
 

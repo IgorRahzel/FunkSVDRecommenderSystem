@@ -9,7 +9,7 @@ class RatePredictor:
         self.raw_data = raw_data
     
 
-    def topK_neighbors(self,itemId, userId, k=5):
+    def topK_neighbors(self,userId,itemId, k=3):
         # Handling cases where user is not in the user-item matrix
         if userId not in self.user_item_matrix.index:
             item_raw_data = self.raw_data[self.raw_data['ItemId'] == itemId]
@@ -70,3 +70,46 @@ class RatePredictor:
         predicted_rating + self.user_mean_rating[userId]
 
         return predicted_rating
+
+
+    def topK_threshold(self,userId,itemId,k = 5, threshold = 0):
+        #se o item ou usuario não estiverem na user_item matrix retorna media do item
+        #caso contrario:
+        #   -seleciona a linha contendo as similaridades do item 'itemId'
+        #   -filtra linha selecionada para conter apenas similaridades > threshold
+        #   -ordena a linha em ordem decrescente
+        #   -seleciona apenas as top-K similaridades
+        #   -obtem o idx('ItemId') correspondente a cada uma das topK similaridades
+        #   -seleciona coluna da user-item matrix referente ao usuario 'userId'
+        #   -filtra linha para conter apenas os idx selecionados anteriormente
+        #   -ordena os ratings do usuario de acordo com o array idx
+        #   -basta então obter a previsão realizando o dot product ente a linha de usuarios e items e então dividir o resultado pela soma absoluta das similatidades
+        #handling cases of missing itemId or missing userId
+        if itemId not in self.user_item_matrix.columns or userId not in self.user_item_matrix.index:
+            item_raw_data = self.raw_data[self.raw_data['ItemId']==itemId]
+            return item_raw_data['Rating'].mean()
+        #Making predictions
+        else:
+            # Filter similarity values for the given itemId
+            filtered_item_similarities = self.similarity_matrix.loc[itemId].copy()
+            # Remove the item itself from the similarities
+            filtered_item_similarities.drop(itemId, inplace=True)
+            # Filtering similarities with respect to the threshold
+            filtered_item_similarities = filtered_item_similarities[filtered_item_similarities > threshold]
+            
+            # Sort and select top-k similar items
+            filtered_item_similarities = filtered_item_similarities.sort_values(ascending=False).head(k)
+            
+            # Extract item indexes
+            similar_items_idx = filtered_item_similarities.index
+            
+            # Get the ratings given by the user for these similar items
+            user_ratings = self.user_item_matrix.loc[userId, similar_items_idx]
+            
+            # If there are no ratings available, return the user's mean rating
+            if len(user_ratings) == 0:
+                return self.user_mean_rating[userId]
+            
+            # Compute the weighted average prediction
+            prediction = np.dot(filtered_item_similarities.values, user_ratings) / np.sum(np.abs(filtered_item_similarities))
+            return prediction + self.user_mean_rating[userId]

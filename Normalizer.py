@@ -17,7 +17,6 @@ class Normalizer:
         users_mean_rating = user_item_matrix.mean(axis=1,skipna=True)
 
         # Subtract the mean rating per user, ignoring NaNs to only center on rated items
-        user_item_matrix = user_item_matrix.fillna(0)
         user_item_matrix = user_item_matrix.subtract(users_mean_rating, axis=0)
-
+        user_item_matrix = user_item_matrix.fillna(0)
         return user_item_matrix, users_mean_rating
