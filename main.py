@@ -30,7 +30,7 @@ print(user_mean['afced32639'])
 similarity = SimilarityCalculator()
 similarity_matrix = similarity(user_item_matrix)
 
-
+#Raw data
 ratings_builder = MatrixBuilder()
 df_ratings = ratings_builder._pre_processing()
 
@@ -40,7 +40,7 @@ predictor = RatePredictor(user_item_matrix,similarity_matrix,user_mean,df_rating
 target_file = 'targets.csv'
 targets_builder = MatrixBuilder(data=target_file)
 df_target = targets_builder._pre_processing()
-'''
+
 # Abre o arquivo output.csv para escrita
 with open('output.csv', 'w') as file:
     # Escreve o cabeçalho
@@ -55,11 +55,8 @@ with open('output.csv', 'w') as file:
         file.write(f'{user_id}:{item_id},{rating}\n')
 
 '''
-rating = predictor.topK_neighbors('72a8737589','fa3cd7265a')
-print(rating)
-rating = predictor.topK_neighbors('fbaf2ab626','fa3cd7265a')
-print(rating)
-'''
+#rating = predictor.topK_threshold
+
 #select a random user and item:
 def select_random_rated_user_item(user_item_matrix, seed=None):
     # Set seed if provided for reproducibility (optional)
@@ -84,12 +81,15 @@ def select_random_rated_user_item(user_item_matrix, seed=None):
     return random_user, random_item
 
 
-for i in range(10):
-    random_user, random_item = select_random_rated_user_item(train_set)
-    rating = train_set.loc[random_user,random_item]
+print("TEST MATRIX")
+for i in range(20):
+    j = np.random.randint(0,len(df_ratings))
+    random_user = df_ratings['UserId'].iloc[j]
+    random_item = df_ratings['ItemId'].iloc[j]
+    rating = df_ratings['Rating'].iloc[j]
     print(f"Random user: {random_user}, Random item: {random_item}, Rating: {rating}")
 
-    yhat = predictor.topK_neighbors(random_item,random_user)
+    yhat = predictor.topK_threshold(random_user,random_item)
     print(yhat)
     print("------------------------------------------\n\n")
 '''
