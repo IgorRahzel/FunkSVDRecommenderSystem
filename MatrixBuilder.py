@@ -19,55 +19,44 @@ class MatrixBuilder:
         df = df.drop(columns=['UserId:ItemId'])
         return df
 
-    def split_data(self, data, test_size=0.2, random_state=None):
-        if random_state:
-            np.random.seed(random_state)
-        # Generate a random array of the same length as the DataFrame
-        random_values = np.random.uniform(0, 1, size=len(data))
-        threshold = 1 - test_size
-        # Split the DataFrame into training and test sets based on the threshold
-        train_data = data[random_values < threshold]
-        test_data = data[random_values >= threshold]
-        return train_data, test_data
+    def filter_items(self, data, min_ratings=5):
+    
+        item_counts = data[self.item_col].value_counts()  # Count ratings per item
+        filtered_items = item_counts[item_counts >= min_ratings].index  # Get items that meet the threshold
+        filtered_data = data[data[self.item_col].isin(filtered_items)]  # Filter data
+        return filtered_data
 
-    def filter_users(self, data, min_interactions=5):
+    def filter_users(self,data,min_ratings = 5):
         user_counts = data[self.user_col].value_counts()
-        filtered_users = user_counts[user_counts >= min_interactions].index
+        filtered_users = user_counts[user_counts >= min_ratings].index
         filtered_data = data[data[self.user_col].isin(filtered_users)]
         return filtered_data
 
-    def build_matrix(self, data):
-        user_item_matrix = data.pivot_table(
-            index=self.user_col,
-            columns=self.item_col,
-            values=self.rating_col,
-        )
-        return user_item_matrix
-
-    def build_filtered_matrix(self, data, min_interactions=5):
-        """
-        Builds user-item matrices for training and testing sets after filtering users.
-
-        Parameters:
-        train_data (pd.DataFrame): Training data with user, item, and rating columns.
-        test_data (pd.DataFrame): Testing data with user, item, and rating columns.
-        min_interactions (int): Minimum number of interactions a user must have to be kept.
-
-        Returns:
-        tuple: Training and testing user-item matrices (pd.DataFrame, pd.DataFrame)
-        """
+    def build_filtered_matrix(self, data, min_interactions=30):
         # Filter users in data 
-        filtered_data = self.filter_users(data, min_interactions)
-        # Build matrix
-        matrix = self.build_matrix(filtered_data)
-       
+        filtered_data = self.filter_users(data, min_interactions).copy()
+        filtered_data.loc[:, self.user_col] = filtered_data[self.user_col].astype(str)
+        filtered_data.loc[:, self.item_col] = filtered_data[self.item_col].astype(str)
+
+        # Get unique users and items
+        users = filtered_data[self.user_col].unique()
+        items = filtered_data[self.item_col].unique()
+
+        # Create dictionaries to map user and item IDs to indices
+        user_to_index = {user: idx for idx, user in enumerate(users)}
+        item_to_index = {item: idx for idx, item in enumerate(items)}
+
+        # Initialize the matrix
+        user_item_matrix = np.full((len(items), len(users)),np.nan)
+
+        # Fill the matrix with ratings
+        for _, row in filtered_data.iterrows():
+            user_idx = user_to_index[row[self.user_col]]
+            item_idx = item_to_index[row[self.item_col]]
+            user_item_matrix[item_idx, user_idx] = row[self.rating_col]
         
-        return matrix
-
-
-#builder = MatrixBuilder()
-#train_matrix, test_matrix = builder()
-#print("Train Matrix:")
-#print(train_matrix)
-#print("\nTest Matrix:")
-#print(test_matrix)
+        # Convert to a DataFrame for better manipulation
+        matrix_df = pd.DataFrame(user_item_matrix, index=items, columns=users)
+        matrix_df.index.name = 'ItemId'
+        matrix_df.columns.name = 'UserId'
+        return matrix_df
