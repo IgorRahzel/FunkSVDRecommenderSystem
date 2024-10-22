@@ -4,7 +4,7 @@ from MatrixBuilder import MatrixBuilder
 from Normalizer import Normalizer
 from SimilarityCalculator import SimilarityCalculator
 from RatePredictor import RatePredictor
-from SVD import SVD
+
 
 #print(pd.__version__)
 #print(np.__version__)
