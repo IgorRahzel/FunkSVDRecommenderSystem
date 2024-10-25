@@ -12,8 +12,8 @@ class FunkSVD:
         self.item_to_index = {item: idx for idx, item in enumerate(dataframe['ItemId'].unique())}
     
     def _initializePQ(self,k):
-        self.P = 5/np.sqrt(5) * np.random.randn(self.m,k)
-        self.Q = 5/np.sqrt(5) * np.random.randn(k,self.n)
+        self.P = (np.sqrt(5/k)) * np.random.rand(self.m,k)
+        self.Q = (np.sqrt(5/k)) * np.random.rand(k,self.n)
     
     def _getMiniBatch(self,batch_size):
         """Generate a mini-batch from the DataFrame."""
@@ -39,10 +39,9 @@ class FunkSVD:
                 #New mapping to acces predictions in the PredictedRatings matrix
                 batch_user_to_index = {user: idx for idx, user in enumerate(batch['UserId'].unique())}
                 batch_item_to_index = {item: idx for idx, item in enumerate(batch['ItemId'].unique())}
-                #batch_users_idx = batch['UserId'].map(batch_user_to_index)
-                #batch_items_idx = batch['ItemId'].map(batch_item_to_index)
+              
                 predictions = []
-                for index,row in batch.iterrows():
+                for _,row in batch.iterrows():
                     user = row['UserId']
                     item = row['ItemId']
 
@@ -80,7 +79,10 @@ class FunkSVD:
     def train(self,k=100,batch_size = 10,lr = 0.01,lamda = 0.02, epochs = 30):
         self._MiniBatchGradientDescent(k,batch_size,lr,lamda , epochs)
     
-    def prediction(self,userId,itemId):
-        user_idx = self.user_to_index[userId]
-        item_idx = self.item_to_index[itemId]
-        return self.P[user_idx,:] @ self.Q[:,item_idx]
+    def prediction(self,userId,itemId,item_mean):
+        if userId not in self.dataframe['UserId'] or itemId not in self.dataframe['ItemId']:
+          return item_mean[itemId]
+        else:
+            user_idx = self.user_to_index[userId]
+            item_idx = self.item_to_index[itemId]
+            return self.P[user_idx,:] @ self.Q[:,item_idx]

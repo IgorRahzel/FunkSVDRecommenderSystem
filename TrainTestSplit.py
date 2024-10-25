@@ -24,8 +24,8 @@ class TrainTestSplit:
         # Split the DataFrame into training and test sets based on the threshold
         train_data = self.df[random_values < threshold]
         test_data = self.df[random_values >= threshold]
-        return train_data, test_data
+        return train_data, test_data, self.df
     
     def __call__(self,test_size = 0.2,random_state = None):
         self._preProcessing()
-        return self._splitData()
+        return self._splitData(test_size=test_size,random_state=random_state)
