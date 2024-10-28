@@ -9,8 +9,8 @@ class FunkSVD:
 
         # Creating bias factors
         self.global_mean = dataframe['Rating'].mean()
-        self.bu_vector = np.random.rand(self.m)
-        self.bi_vector = np.random.rand(self.n)
+        self.bu_vector = np.zeros(self.m)
+        self.bi_vector = np.zeros(self.n)
 
         # Create a mapping for userId and itemId
         self.user_to_index = {user: idx for idx, user in enumerate(dataframe['UserId'].unique())}
