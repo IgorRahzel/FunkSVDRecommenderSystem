@@ -11,12 +11,12 @@ def rmse(predictions, actuals):
 
 # Define the range of hyperparameters to try
 param_grid = {
-    'epochs': [30],
+    'epochs': [20],
     'lr': [0.1],
     'test_size': [0.05],  # You can adjust these values for different splits
     'k': [50],
     'batch_size': [64],
-    'lamda':[0.1],
+    'lamda':[0.2],
 }
 
 # Create all combinations of the hyperparameters
@@ -72,27 +72,29 @@ for epochs, lr, test_size, k, batch_size,lamda in param_combinations:
             'lamda': lamda
         }
 
+# Making predictions for the target.csv file
+# Making predictions for the target.csv file
+
+        # Making predictions for the target.csv file
+
+        targets = pd.read_csv('targets.csv')
+        targets[['UserId', 'ItemId']] = targets['UserId:ItemId'].str.split(':', expand=True)
+        targets = targets.drop(columns=['UserId:ItemId'])
+
+        # Abre o arquivo output.csv para escrita
+        with open('output3.csv', 'w') as file:
+            # Escreve o cabeçalho
+            file.write('UserId:ItemId,Rating\n')
+
+            # Itera pelas linhas do df_target e escreve cada linha no CSV
+            for _, row in targets.iterrows():
+                user = row['UserId']
+                item = row['ItemId']
+                rating = model.prediction(user,item,item_mean)
+                # Escreve a linha no arquivo
+                file.write(f'{user}:{item},{rating}\n')
+
 # Output the best configuration and RMSE
 print("\nBest configuration:")
 print(best_config)
 print(f"Best Test Set RMSE: {best_rmse}")
-
-
-# Making predictions for the target.csv file
-
-targets = pd.read_csv('targets.csv')
-targets[['UserId', 'ItemId']] = targets['UserId:ItemId'].str.split(':', expand=True)
-targets = targets.drop(columns=['UserId:ItemId'])
-
-# Abre o arquivo output.csv para escrita
-with open('output2.csv', 'w') as file:
-    # Escreve o cabeçalho
-    file.write('UserId:ItemId,Rating\n')
-
-    # Itera pelas linhas do df_target e escreve cada linha no CSV
-    for _, row in targets.iterrows():
-        user = row['UserId']
-        item = row['ItemId']
-        rating = model.prediction(user,item,item_mean)
-        # Escreve a linha no arquivo
-        file.write(f'{user}:{item},{rating}\n')

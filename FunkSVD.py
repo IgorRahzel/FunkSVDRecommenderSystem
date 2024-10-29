@@ -1,6 +1,5 @@
 import numpy as np
-import pandas as pd
-
+from AdamOptimizer import AdamOptimizer
 class FunkSVD:
     def __init__(self, dataframe):
         self.dataframe = dataframe.copy()
@@ -30,9 +29,24 @@ class FunkSVD:
         for start in range(0, len(shuffled_df), batch_size):
             yield shuffled_df.iloc[start:start + batch_size]
         
-    def _MiniBatchGradientDescent(self, k=100, batch_size=10, lr=0.01, lamda=0.02, epochs=20):
+    def _MiniBatchGradientDescent(self, k=100, batch_size=10, lr=0.01, lamda=0.02, epochs=20, momentum=0.9):
         # Initialize the P and Q matrices
         self._initializePQ(k)
+
+        adam = AdamOptimizer()
+
+        # Initialize velocities (momentum terms) for P, Q, bu, and bi
+        vP = np.zeros_like(self.P)
+        mP = np.zeros_like(self.P)
+
+        vQ = np.zeros_like(self.Q)
+        mQ = np.zeros_like(self.Q)
+
+        vbu = np.zeros_like(self.bu_vector)
+        mbu = np.zeros_like(self.bu_vector)
+
+        vbi = np.zeros_like(self.bi_vector)
+        mbi = np.zeros_like(self.bi_vector)
 
         # Iterate over epochs
         for epoch in range(epochs):
@@ -43,25 +57,32 @@ class FunkSVD:
                 users_idx = batch['user_idx'].to_numpy()
                 items_idx = batch['item_idx'].to_numpy()
 
-                # Make predictions for batch
+                # Make predictions for the batch
                 predictions = np.sum(self.P[users_idx, :] * self.Q[:, items_idx].T, axis=1) + self.global_mean + self.bi_vector[items_idx] + self.bu_vector[users_idx]
-               
                 error = batch['Rating'].to_numpy() - predictions
 
                 # Reshape error for broadcasting
                 error = error[:, np.newaxis]  # Shape (batch_size, 1)
 
                 # Update P and Q matrices and b_u and b_i vectors
-                P_new = self.P[users_idx, :] + lr * ((error * self.Q[:, items_idx].T) - (lamda * self.P[users_idx, :]))
-                Q_new = self.Q[:, items_idx].T + lr * (error * self.P[users_idx, :] - lamda * self.Q[:, items_idx].T)
-                bu_new = self.bu_vector[users_idx] + lr * (error.squeeze() - lamda * self.bu_vector[users_idx])
-                bi_new = self.bi_vector[items_idx] + lr * (error.squeeze() - lamda * self.bi_vector[items_idx])
+                P_grad = -((error * self.Q[:, items_idx].T) - (lamda * self.P[users_idx, :]))
+                Q_grad = -(error * self.P[users_idx, :] - lamda * self.Q[:, items_idx].T)
+                bu_grad = -(error.squeeze() - lamda * self.bu_vector[users_idx])
+                bi_grad = -(error.squeeze() - lamda * self.bi_vector[items_idx])
 
+                updateP,mP[users_idx,:],vP[users_idx,:] = adam.step(mP[users_idx,:],vP[users_idx,:],P_grad)
+                updateQ,mQ[:,items_idx],vQ[:,items_idx] = adam.step(mQ[:,items_idx],vQ[:,items_idx],Q_grad.T)
+                updatebu,mbu[users_idx],vbu[users_idx] = adam.step(mbu[users_idx],vbu[users_idx],bu_grad)
+                updatebi,mbi[items_idx],vbi[items_idx] = adam.step(mbi[items_idx],vbi[items_idx],bi_grad)
+
+
+                P_new =  self.P[users_idx, :] + updateP
+                Q_new = self.Q[:,items_idx] + updateQ
+                self.bu_vector[users_idx] = self.bu_vector[users_idx] + updatebu
+                self.bi_vector[items_idx] = self.bi_vector[items_idx] + updatebi
 
                 self.P[users_idx, :] = P_new
-                self.Q[:, items_idx] = Q_new.T
-                self.bu_vector[users_idx] = bu_new
-                self.bi_vector[items_idx] = bi_new
+                self.Q[:, items_idx] = Q_new
 
                  # Accumulate the squared error for loss calculation
                 total_loss += np.sum(error**2)
@@ -79,4 +100,5 @@ class FunkSVD:
         else:
             user_idx = self.user_to_index[userId]
             item_idx = self.item_to_index[itemId]
-            return self.global_mean + self.bu_vector[user_idx] + self.bi_vector[item_idx] + self.P[user_idx, :] @ self.Q[:, item_idx]
+            prediction = self.global_mean + self.bu_vector[user_idx] + self.bi_vector[item_idx] + self.P[user_idx, :] @ self.Q[:, item_idx]
+            return np.clip(prediction,1,5)
