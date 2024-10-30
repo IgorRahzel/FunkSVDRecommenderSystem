@@ -13,10 +13,10 @@ def rmse(predictions, actuals):
 param_grid = {
     'epochs': [20],
     'lr': [0.1],
-    'test_size': [0.01],  # You can adjust these values for different splits
+    'test_size': [0.001],  # You can adjust these values for different splits
     'k': [100],
     'batch_size': [64],
-    'lamda':[0.2,0.25,0.3],
+    'lamda':[0.2],
 }
 
 # Create all combinations of the hyperparameters
