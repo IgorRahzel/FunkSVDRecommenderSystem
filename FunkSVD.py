@@ -1,8 +1,8 @@
 import numpy as np
 from AdamOptimizer import AdamOptimizer
 class FunkSVD:
-    def __init__(self, dataframe):
-
+    def __init__(self, dataframe,random_seed=42):
+        np.random.seed(random_seed)
         self.dataframe = dataframe.copy()
         
         # Storing the number of unique users and items

@@ -23,7 +23,7 @@ lamda = 0.2
     
 # Split the data
 splitter = TrainTestSplit(file_name=ratings_file)
-train_data, test_data, data = splitter(test_size=test_size)
+train_data, test_data, data = splitter(test_size=test_size,random_state=42)
     
 # Train the model
 model = FunkSVD(train_data)
