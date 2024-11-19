@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 from AdamOptimizer import AdamOptimizer
 class FunkSVD:
     def __init__(self, dataframe):
@@ -89,7 +90,8 @@ class FunkSVD:
 
             # Calculate total RMSE after each epoch
             avg_loss = np.sqrt(total_loss / len(self.dataframe))
-            print(f"Epoch {epoch+1}/{epochs}, Loss (RMSE): {avg_loss}")
+            if sys.stdout.isatty():
+                print(f"Epoch {epoch+1}/{epochs}, Loss (RMSE): {avg_loss}")
 
     def train(self, k=100, batch_size=10, lr=0.01, lamda=0.02, epochs=30):
         self._MiniBatchGradientDescent(k, batch_size, lr, lamda, epochs)
