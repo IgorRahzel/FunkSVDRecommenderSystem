@@ -16,9 +16,3 @@ class AdamOptimizer:
         v_hat = v/(1-(self.beta2**self.t))
         update = -self.lr * (m_hat)/(np.sqrt(v_hat)+self.epsilon)
         return update, m, v
-
-
-
-    
-   
-

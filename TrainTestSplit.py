@@ -29,3 +29,4 @@ class TrainTestSplit:
     def __call__(self,test_size = 0.2,random_state = None):
         self._preProcessing()
         return self._splitData(test_size=test_size,random_state=random_state)
+    
