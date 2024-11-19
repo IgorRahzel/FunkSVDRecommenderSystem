@@ -43,9 +43,14 @@ Ensure you have the following dependencies installed:
 pip install numpy pandas
 ```
 ### **2. Prepare the Data**
-Place a `ratings.csv` file in the project directory. The file should have the format:
+Place a `ratings.csv` file and a `targets.csv` file in the project directory. The file `ratings.csv` should have the format:
 
-UserId:ItemId,Rating
+> UserId:ItemId,Rating
+
+and the `targets.csv` file should have the format:
+
+> UserId:ItemId
+
 
 ### **3. Run the Code**
 Execute `main.py` to:
@@ -58,7 +63,10 @@ python3 main.py
 ```
 
 ### **4. Output**
-Predictions are saved to `outuput.csv`
+- During the training the Epoch and the current Loss are also printed in the stdout in the format:
+> Current_Epoch/Total_Epochs: Loss
+- Predictions are printed in the stdout in the format:
+> UserId:ItemId,Rating
 
 ### **5. Hyperparameters**
 Key Hyperparameters for tuning the model
